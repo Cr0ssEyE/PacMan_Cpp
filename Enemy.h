@@ -9,22 +9,32 @@
 class MainMap;
 class EnemyState;
 class Player;
+
 class Enemy : public GameObject
 {
 public:
     Enemy();
     ~Enemy();
     
-    void Update(Player* Player);
+    void Update(Player* Player, int Time);
     void draw() override;
     void InitEnemy(int x, int y, unsigned short c, MainMap* GameMap);
     void ChangeState(EnemyState* NewState);
 
+    FORCEINLINE int GetInBoxTime() const { return InBoxElapsedTime; }
+    
+    FORCEINLINE void UpdateInBoxTime() { InBoxElapsedTime += clock() - UpdateTime; }
+    
     FORCEINLINE int GetTraceRange() const { return TraceRange; }
+    
     FORCEINLINE pair<int, int> GetSpawnLocation() const { return SpawnLocation; }
+    
     FORCEINLINE void SetTargetLocation(int x, int y) { TargetLocation = make_pair(x, y); }
+    
     FORCEINLINE void SetRange(int d, int t) { DetectRange = d; TraceRange = t; }
+    
     FORCEINLINE void SetDefaultColor() { Color = DefaultColor; }
+    
     FORCEINLINE void SetDrawColor(unsigned short c) { Color = c; }
     
 private:
@@ -57,4 +67,7 @@ private:
 
     int DetectRange;
     int TraceRange;
+
+    int UpdateTime;
+    int InBoxElapsedTime;
 };

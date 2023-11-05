@@ -11,6 +11,7 @@ MainMap::MainMap()
 	VisitInfo = nullptr;
 	MapWeightInfo = nullptr;
 	Closed = true;
+	CookieRemain = true;
 	initMap();
 }
 
@@ -153,11 +154,6 @@ void MainMap::initMap()
 		
 			MapInfo[h][14].SetImg(const_cast<wchar_t*>(L"·"));
 		}
-
-		for (int w = 11; w < 13; w++)
-		{
-			// MapInfo[12][w].SetImg(const_cast<wchar_t*>(L" "));
-		}
 		
 		for (int h = 11; h < 14; h++)
 		{
@@ -174,6 +170,13 @@ void MainMap::initMap()
 				MapInfo[h][w].SetImg(const_cast<wchar_t*>(L" "));
 			}
 		}
+
+		// 파워 쿠키 위치 찍기
+		MapInfo[1][1].SetImg(const_cast<wchar_t*>(L"◎"));
+		MapInfo[GameMapHeight - 2][1].SetImg(const_cast<wchar_t*>(L"◎"));
+		MapInfo[1][GameMapWidth - 2].SetImg(const_cast<wchar_t*>(L"◎"));
+		MapInfo[GameMapHeight - 2][GameMapWidth - 2].SetImg(const_cast<wchar_t*>(L"◎"));
+		MapInfo[GameMapHeight / 2][GameMapWidth / 2].SetImg(const_cast<wchar_t*>(L"◎"));
 		
 		// 벽 아닌 곳만 방문 가능하게 false 처리
 		ResetInfo();
@@ -186,28 +189,41 @@ bool MainMap::Update(GameObject* other)
 	if(PlayerCharacter && MapInfo[other->GetX()][other->GetY()].GetImg() == const_cast<wchar_t*>(L"·"))
 	{
 		MapInfo[other->GetX()][other->GetY()].SetImg(const_cast<wchar_t*>(L" "));
+		if(!PlayerCharacter->CheckPowered())
+		{
+			PlayerCharacter->AddCookieStack();
+		}
 	}
-	else if(PlayerCharacter && MapInfo[other->GetX()][other->GetY()].GetImg() == const_cast<wchar_t*>(L"◎"))
+	else if(PlayerCharacter && !PlayerCharacter->CheckPowered() && MapInfo[other->GetX()][other->GetY()].GetImg() == const_cast<wchar_t*>(L"◎"))
 	{
 		MapInfo[other->GetX()][other->GetY()].SetImg(const_cast<wchar_t*>(L" "));
 		PlayerCharacter->SetPowered(true);
+	}
+	if(!CookieRemain)
+	{
+		return true;
 	}
 	return false;
 }
 
 void MainMap::draw()
 {
+	CookieRemain = false;
 	for (int h = 0; h < MapHeight; h++)
 	{
 		for (int w = 0; w < MapWidth; w++)
 		{
-			if(MapInfo[h][w].GetImg() == const_cast<wchar_t*>(L"·"))
+			if(MapInfo[h][w].GetImg() == const_cast<wchar_t*>(L"·") || MapInfo[h][w].GetImg() == const_cast<wchar_t*>(L"◎"))
 			{
 				SetColor(YELLOW);
+				if(MapInfo[h][w].GetImg() == const_cast<wchar_t*>(L"·"))
+				{
+					CookieRemain = true;
+				}
 			}
 			else
 			{
-				if(Closed && (h > GameMapHeight / 2 - 3 && h < GameMapHeight / 2 + 3) && (w > GameMapWidth / 2 - 3 && w < GameMapWidth / 2 + 3))
+				if(h > GameMapHeight / 2 - 3 && h < GameMapHeight / 2 + 3 && (w > GameMapWidth / 2 - 3 && w < GameMapWidth / 2 + 3))
 				{
 					SetColor(WHITE);
 				}

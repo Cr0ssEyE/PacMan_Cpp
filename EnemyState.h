@@ -28,7 +28,7 @@ protected:
 class InBox : public EnemyState
 {
 public:
-    InBox() { BeginPlay = true; }
+    InBox() { BeginPlay = 0; }
     virtual ~InBox() override { }
 
     static InBox* GetInstance();
@@ -38,7 +38,7 @@ public:
 
 private:
     int InBoxTimer;
-    bool BeginPlay;
+    int BeginPlay;
 };
 class Hunter : public EnemyState
 {

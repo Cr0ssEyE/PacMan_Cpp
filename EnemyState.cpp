@@ -26,11 +26,16 @@ void InBox::Execute(Enemy* Ghost, MainMap* GameMap, Player* DetectedPlayer, pair
 {
     EnemyState::Execute(Ghost, GameMap, DetectedPlayer, TargetLocation);
     
-    if(!GameMap->CheckClosed() && BeginPlay)
+    if(!GameMap->CheckClosed() && BeginPlay < 4)
     {
-        BeginPlay = false;
+        BeginPlay++;
         Ghost->ChangeState(Hunter::GetInstance());
         return;
+    }
+    Ghost->UpdateInBoxTime();
+    if(Ghost->GetInBoxTime() > IN_BOX_TIME * 1000)
+    {
+        Ghost->ChangeState(Hunter::GetInstance());
     }
 }
 
@@ -63,7 +68,7 @@ void Hunter::Execute(Enemy* Ghost, MainMap* GameMap, Player* DetectedPlayer, pai
     EnemyState::Execute(Ghost, GameMap, DetectedPlayer, TargetLocation);
     if(DetectedPlayer)
     {
-        if(Ghost->collision(DetectedPlayer))
+        if(Ghost->collision(DetectedPlayer) && !DetectedPlayer->CheckPowered())
         {
             DetectedPlayer->SetDead(true);
             return;
@@ -78,9 +83,15 @@ void Hunter::Execute(Enemy* Ghost, MainMap* GameMap, Player* DetectedPlayer, pai
         {
             DetectedPlayer = nullptr;
             Execute(Ghost, GameMap, DetectedPlayer, TargetLocation);
+            return;
+        }
+        if(DetectedPlayer->CheckPowered())
+        {
+            Ghost->ChangeState(Hunted::GetInstance());
+            return;
         }
     }
-    else if(TargetLocation.first == Ghost->GetX() && TargetLocation.second == Ghost->GetY())
+    else if((TargetLocation.first == Ghost->GetX() && TargetLocation.second == Ghost->GetY()) || (!TargetLocation.first && !TargetLocation.second))
     {
         while (true)
         {
@@ -88,10 +99,11 @@ void Hunter::Execute(Enemy* Ghost, MainMap* GameMap, Player* DetectedPlayer, pai
             if(GameMap->GetMapImg(TargetLocation.first, TargetLocation.second) != const_cast<wchar_t*>(L"■"))
             {
                 Ghost->SetTargetLocation(TargetLocation.first, TargetLocation.second);
-                return;
+                break;
             }
         }
     }
+    
 }
 
 void Hunter::ExitState(Enemy* Ghost)
@@ -125,11 +137,19 @@ void Hunted::Execute(Enemy* Ghost, MainMap* GameMap, Player* DetectedPlayer, pai
         if(Ghost->collision(DetectedPlayer))
         {
             Ghost->ChangeState(Eaten::GetInstance());
+            DetectedPlayer = nullptr;
+            return;
+        }
+        if(!DetectedPlayer->CheckPowered())
+        {
+            Ghost->ChangeState(Hunter::GetInstance());
+            Ghost->SetTargetLocation(0, 0);
             return;
         }
         // 플레이어와 가장 먼 모서리로 위치 찍기
-        int TargetX = GameMapHeight / 2 - DetectedPlayer->GetX() < 0 ? GameMapHeight - 2 : 1;
-        int TargetY = GameMapWidth / 2 - DetectedPlayer->GetY() < 0 ? GameMapWidth - 2 : 1;
+        int TargetX = GameMapHeight / 2 - DetectedPlayer->GetX() > 0 ? GameMapHeight - 2 : 1;
+        int TargetY = GameMapWidth / 2 - DetectedPlayer->GetY() > 0 ? GameMapWidth - 2 : 1;
+        GameMap->SetVisitInfo(DetectedPlayer->GetX(), DetectedPlayer->GetY(), true);
         Ghost->SetTargetLocation(TargetX, TargetY);
     }
 }
@@ -176,5 +196,5 @@ void Eaten::Execute(Enemy* Ghost, MainMap* GameMap, Player* DetectedPlayer, pair
 void Eaten::ExitState(Enemy* Ghost)
 {
     EnemyState::ExitState(Ghost);
-    
+    Ghost->SetDefaultColor();
 }

@@ -25,17 +25,14 @@ Enemy::~Enemy()
     
 }
 
-void Enemy::Update(Player* Player)
+void Enemy::Update(Player* Player, int Time)
 {
     if(!DetectedPlayer)
     {
         DetectPlayer(Player);
     }
-    CurrentState->Execute(this, GameMap, DetectedPlayer, TargetLocation);
-    if(InBox* GhostInBox = dynamic_cast<InBox*>(CurrentState))
-    {
-        return;
-    }
+    UpdateTime = Time;
+    CurrentState->Execute(this, PathMap, DetectedPlayer, TargetLocation);
     FindPath();
 }
 
@@ -54,8 +51,8 @@ void Enemy::InitEnemy(int x, int y, unsigned short c, MainMap* GameMap)
     DefaultColor = c;
     this->Color = c;
     this->GameMap = GameMap;
-    Object_Img = const_cast<wchar_t*>(L"Ω");
     PathMap = GameMap;
+    Object_Img = const_cast<wchar_t*>(L"Ω");
     Parent = new pair<int, int> * [GameMapHeight];
     for (int h = 0; h < GameMapHeight; h++)
     {

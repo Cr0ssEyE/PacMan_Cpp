@@ -39,4 +39,5 @@ private:
 	bool** VisitInfo;
 
 	bool Closed;
+	bool CookieRemain;
 };

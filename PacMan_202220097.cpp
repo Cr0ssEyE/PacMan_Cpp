@@ -10,13 +10,14 @@
 
 #define ENEMY_NUM 4
 #define ACTIVATE_GHOST_SECOND 5
-#define POWERFUL_STATE_SECOND 5
+#define POWERFUL_STATE_SECOND 10
 #define UPDATE_SECOND 0.2
 
 using namespace std;
 
 void main()
 {
+    bool GameClear = false;
     MainMap* GameMap = new MainMap();
     GameMap->initMap();
 
@@ -44,8 +45,7 @@ void main()
     // return;
     ScreenInit();
     int Movement = 4;
-    int GhostUpdateStack = 0, PowerfulStateCheck = 0, ActivateGhostTimeCheck = 0;;
-    
+    int GhostUpdateStack = 0, PowerfulStateCheck = 0, ActivateGhostTimeCheck = 0;
     while (true)
     {
         if(PlayerCharacter->CheckDead())
@@ -59,6 +59,8 @@ void main()
         int Timer = clock(), UpdateTimeCheck = 0;
         int PressKey = 0;
         bool BeginPlay = false;
+        bool PowerOffBegin = false;
+        
         if (_kbhit())
         {
             if (_getch() == 224)
@@ -100,6 +102,10 @@ void main()
                 if(PlayerCharacter->CheckPowered())
                 {
                     PowerfulStateCheck += UpdateTimeCheck;
+                    if(PowerfulStateCheck > POWERFUL_STATE_SECOND * 700)
+                    {
+                        PowerOffBegin = true;
+                    }
                     if (PowerfulStateCheck > POWERFUL_STATE_SECOND * 1000)
                     {
                         PowerfulStateCheck = 0;
@@ -128,23 +134,37 @@ void main()
         ScreenClear();
         
         // 입력 받은 방향으로 계속 이동
-        PlayerCharacter->Update(Movement);
+        PlayerCharacter->Update(Movement, PowerOffBegin);
         if(GhostUpdateStack > 1)
         {
             for (auto G : Ghost)
             {
-                G->Update(PlayerCharacter);
+                G->Update(PlayerCharacter, Timer);
             }
             GhostUpdateStack = 0;
         }
         //Ghost[0]->Update(PlayerCharacter);
         if(GameMap->Update(PlayerCharacter))
         {
-            
+            ScreenClear();
+            ScreenRelease();
+            GameClear = true;
+            break;
         }
     }
-    cout << "   ※※※ !! PLAYER DEAD !! ※※※ \n";
-    cout << " ※※※ PRESS ANY KEY TO EXIT ※※※ \n";
+    if(GameClear)
+    {
+        cout << " ※※※ PRESS ANY KEY TO EXIT ※※※ \n";
+        cout << "   ※※※ !! GAME CLEAR !! ※※※ \n";
+        cout << "   ※※※ !! GAME CLEAR !! ※※※ \n";
+        cout << "   ※※※ !! GAME CLEAR !! ※※※ \n";
+        cout << " ※※※ PRESS ANY KEY TO EXIT ※※※ \n";
+    }
+    else
+    {
+        cout << "   ※※※ !! PLAYER DEAD !! ※※※ \n";
+        cout << " ※※※ PRESS ANY KEY TO EXIT ※※※ \n";
+    }
     while (true)
     {
         int PressKey = 0;
